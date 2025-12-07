@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance - {% block title %}Student Portal{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .gradient-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Mobile Sidebar Toggle -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white shadow-md p-4 flex justify-between items-center">
+        <button id="mobileMenuBtn" class="text-gray-700">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        <h1 class="text-lg font-bold gradient-text">Smart Attendance</h1>
+        <div class="w-8"></div> <!-- Spacer for alignment -->
+    </div>
+
+    <div class="flex h-screen pt-16 lg:pt-0">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar-gradient text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition duration-200 ease-in-out z-40 lg:z-0">
+            <div class="text-white flex items-center space-x-2 px-4">
+                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-xl"></i>
+                </div>
+                <span class="text-2xl font-bold">Smart Attendance</span>
+            </div>
+
+            <nav class="flex-grow">
+                <a href="{{ url_for('home') }}" class="sidebar-link {% if request.path == url_for('home') %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('scan_qr') }}" class="sidebar-link {% if request.path == url_for('scan_qr') %}active{% endif %}">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Scan QR</span>
+                </a>
+                <a href="{{ url_for('my_attendance') }}" class="sidebar-link {% if request.path == url_for('my_attendance') %}active{% endif %}">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>My Attendance</span>
+                </a>
+                <a href="{{ url_for('timetable') }}" class="sidebar-link {% if request.path == url_for('timetable') %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Course Schedule</span>
+                </a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link {% if request.path == url_for('profile') %}active{% endif %}">
+                    <i class="fas fa-user-circle"></i>
+                    <span>My Profile</span>
+                </a>
+            </nav>
+
+            <div class="px-4">
+                <div class="bg-blue-900/30 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold">{{ session.get('student_name', 'Student') }}</p>
+                            <p class="text-sm text-blue-200">Student</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="mt-4 flex items-center justify-center space-x-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 py-2 rounded-lg transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }} p-4 rounded-lg shadow-lg max-w-sm">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

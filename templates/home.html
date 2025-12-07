@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Welcome Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Welcome back, {{ session.get('student_name', 'Student') }}!</h1>
+        <p class="text-gray-600">Track your attendance and manage your classes</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="gradient-card text-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100">Today's Attendance</p>
+                    <p class="text-3xl font-bold mt-2">{{ stats.today_attendance }}%</p>
+                </div>
+                <div class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500">Overall Attendance</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ stats.overall_attendance }}%</p>
+                </div>
+                <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chart-line text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500">Classes Attended</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ stats.classes_attended }}/{{ stats.total_classes }}</p>
+                </div>
+                <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{{ url_for('scan_qr') }}" class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition group">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
+                        <i class="fas fa-qrcode text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Scan QR</h3>
+                        <p class="text-sm text-gray-500">Mark attendance</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('my_attendance') }}" class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition group">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">My Attendance</h3>
+                        <p class="text-sm text-gray-500">View records</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('timetable') }}" class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition group">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Schedule</h3>
+                        <p class="text-sm text-gray-500">View timetable</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{{ url_for('profile') }}" class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition group">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Profile</h3>
+                        <p class="text-sm text-gray-500">Update info</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Today's Classes -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Today's Classes</h2>
+            <span class="text-sm text-gray-500">{{ today_date }}</span>
+        </div>
+        
+        {% if today_classes %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for class in today_classes %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ class.time }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ class.course }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ class.instructor }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if class.attended %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {% if class.attended %}Attended{% else %}Pending{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-calendar-times text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">No classes scheduled for today</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

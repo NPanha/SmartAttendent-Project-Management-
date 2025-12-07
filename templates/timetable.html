@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Course Schedule{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Course Schedule</h1>
+                <p class="text-gray-600">View your class timetable and upcoming sessions</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <select id="weekFilter" class="appearance-none bg-white border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 pr-10">
+                        <option value="current">Current Week</option>
+                        <option value="next">Next Week</option>
+                        <option value="all">All Weeks</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <button id="downloadTimetable" class="gradient-bg text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition flex items-center space-x-2">
+                    <i class="fas fa-download"></i>
+                    <span>Download</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Week Info -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-6 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">Week {{ current_week_number }}</h2>
+                <p class="text-blue-100">{{ current_week_range }}</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">{{ upcoming_classes_count }}</div>
+                        <div class="text-blue-100 text-sm">Upcoming Classes</div>
+                    </div>
+                    <div class="h-12 w-px bg-blue-400"></div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">{{ completed_classes_count }}</div>
+                        <div class="text-blue-100 text-sm">Completed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timetable -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <!-- Days Navigation -->
+        <div class="border-b border-gray-200">
+            <div class="flex overflow-x-auto">
+                {% for day in days %}
+                <button class="day-tab flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 
+                    {% if day.active %}border-blue-500 text-blue-600 bg-blue-50{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} 
+                    transition" data-day="{{ day.name }}">
+                    <div class="text-center">
+                        <div class="font-semibold">{{ day.short }}</div>
+                        <div class="mt-1">{{ day.date }}</div>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Timetable Content -->
+        <div class="p-6">
+            {% for day in days %}
+            <div class="day-content {% if not day.active %}hidden{% endif %}" id="day-{{ day.name|lower }}">
+                {% if day.classes %}
+                <div class="space-y-4">
+                    {% for class in day.classes %}
+                    <div class="timetable-class p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0
+                                    {% if class.attended %}bg-green-100 text-green-600
+                                    {% elif class.upcoming %}bg-blue-100 text-blue-600
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    <i class="fas {% if class.attended %}fa-check-circle{% else %}fa-clock{% endif %} text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">{{ class.course }}</h3>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <i class="fas fa-user-tie mr-1"></i> {{ class.instructor }}
+                                        </span>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <i class="fas fa-map-marker-alt mr-1"></i> {{ class.room }}
+                                        </span>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+                                            {% if class.attended %}bg-green-100 text-green-800
+                                            {% elif class.upcoming %}bg-blue-100 text-blue-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            <i class="fas fa-clock mr-1"></i> {{ class.time }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                {% if class.upcoming and not class.attended %}
+                                <a href="{{ url_for('scan_qr') }}" class="gradient-bg text-white font-semibold py-2 px-6 rounded-lg hover:opacity-90 transition flex items-center justify-center space-x-2">
+                                    <i class="fas fa-qrcode"></i>
+                                    <span>Mark Attendance</span>
+                                </a>
+                                {% endif %}
+                                <div class="flex flex-col items-end">
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full mb-2
+                                        {% if class.attended %}bg-green-100 text-green-800
+                                        {% elif class.upcoming %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {% if class.attended %}Attended
+                                        {% elif class.upcoming %}Upcoming
+                                        {% else %}Completed{% endif %}
+                                    </span>
+                                    {% if class.attended %}
+                                    <span class="text-xs text-gray-500">Marked at {{ class.attended_time }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if class.description %}
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <p class="text-gray-600 text-sm">{{ class.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-calendar-times text-4xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">No classes scheduled for {{ day.name }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Upcoming Classes -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Upcoming Deadlines -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Upcoming Deadlines</h2>
+                <i class="fas fa-exclamation-circle text-yellow-500 text-xl"></i>
+            </div>
+            
+            <div class="space-y-4">
+                {% for deadline in deadlines %}
+                <div class="flex items-start space-x-4 p-4 rounded-lg border border-gray-200 hover:border-yellow-300 transition">
+                    <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-flag text-yellow-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-800">{{ deadline.title }}</h4>
+                        <p class="text-sm text-gray-600 mt-1">{{ deadline.course }} • Due: {{ deadline.due_date }}</p>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                        {% if deadline.priority == 'high' %}bg-red-100 text-red-800
+                        {% elif deadline.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {{ deadline.priority|title }}
+                    </span>
+                </div>
+                {% endfor %}
+                
+                {% if not deadlines %}
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-3xl text-green-300 mb-3"></i>
+                    <p class="text-gray-500">No upcoming deadlines</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Class Statistics -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Class Statistics</h2>
+                <i class="fas fa-chart-bar text-blue-500 text-xl"></i>
+            </div>
+            
+            <div class="space-y-6">
+                {% for stat in class_stats %}
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-medium text-gray-700">{{ stat.course }}</span>
+                        <span class="font-bold text-gray-800">{{ stat.attendance }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="h-2 rounded-full 
+                            {% if stat.attendance >= 90 %}bg-green-500
+                            {% elif stat.attendance >= 75 %}bg-blue-500
+                            {% elif stat.attendance >= 60 %}bg-yellow-500
+                            {% else %}bg-red-500{% endif %}" 
+                            style="width: {{ stat.attendance }}%">
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Attended: {{ stat.attended }}</span>
+                        <span>Total: {{ stat.total }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600">{{ total_attended }}</div>
+                        <div class="text-sm text-green-800">Classes Attended</div>
+                    </div>
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600">{{ total_upcoming }}</div>
+                        <div class="text-sm text-blue-800">Upcoming Classes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/timetable.js') }}"></script>
+{% endblock %}
