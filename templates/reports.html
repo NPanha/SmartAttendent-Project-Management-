@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Reports{% endblock %}
+
+{% block content %}
+<div class="reports-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-chart-bar"></i> Attendance Reports</h2>
+            <p>Analytics and insights for your classes</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-primary" onclick="exportReport()">
+                <i class="fas fa-download"></i> Export Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="report-filters">
+        <div class="filter-tabs">
+            <a href="{{ url_for('reports') }}?type=daily" 
+               class="filter-tab {% if report_type == 'daily' %}active{% endif %}">
+                <i class="fas fa-calendar-day"></i> Daily
+            </a>
+            <a href="{{ url_for('reports') }}?type=weekly" 
+               class="filter-tab {% if report_type == 'weekly' %}active{% endif %}">
+                <i class="fas fa-calendar-week"></i> Weekly
+            </a>
+            <a href="{{ url_for('reports') }}?type=monthly" 
+               class="filter-tab {% if report_type == 'monthly' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i> Monthly
+            </a>
+        </div>
+        
+        <div class="date-range">
+            <div class="date-input">
+                <label for="startDate"><i class="fas fa-calendar"></i> From:</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="date-input">
+                <label for="endDate"><i class="fas fa-calendar"></i> To:</label>
+                <input type="date" id="endDate">
+            </div>
+            <button class="btn-outline" onclick="applyDateFilter()">
+                <i class="fas fa-filter"></i> Apply
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-icon success">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ period_stats.present_count }}</h3>
+                <p>Present Students</p>
+                <div class="summary-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+5% from last period</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-icon warning">
+                <i class="fas fa-user-times"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ period_stats.absent_count }}</h3>
+                <p>Absent Students</p>
+                <div class="summary-trend">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>-2% from last period</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-icon info">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ period_stats.attendance_rate }}%</h3>
+                <p>Attendance Rate</p>
+                <div class="summary-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+3% from last period</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-card">
+            <div class="summary-icon secondary">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ period_stats.total_records }}</h3>
+                <p>Total Records</p>
+                <div class="summary-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+12% from last period</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="section-header">
+        <h3><i class="fas fa-table"></i> Attendance Records</h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Class Group</th>
+                    <th>Total Attendance</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Attendance Rate</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.period }}</td>
+                    <td>{{ report.course_code }}</td>
+                    <td>{{ report.course_name }}</td>
+                    <td>{{ report.class_group }}</td>
+                    <td>{{ report.total_attendance }}</td>
+                    <td>
+                        <span class="count-badge present">{{ report.present_count }}</span>
+                    </td>
+                    <td>
+                        <span class="count-badge absent">{{ report.absent_count }}</span>
+                    </td>
+                    <td>
+                        <div class="attendance-rate">
+                            <div class="rate-bar">
+                                <div class="rate-fill" style="width: {{ report.attendance_rate }}%"></div>
+                            </div>
+                            <span class="rate-text">{{ report.attendance_rate }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="action-btn view" onclick="viewDetailedReport('{{ report.course_code }}', '{{ report.class_group }}', '{{ report.period }}')">
+                            <i class="fas fa-eye"></i> Details
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">No attendance records found for the selected period</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="section-header">
+        <h3><i class="fas fa-chart-pie"></i> Visual Analytics</h3>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h4><i class="fas fa-chart-pie"></i> Attendance Distribution</h4>
+            </div>
+            <div class="chart-container">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-header">
+                <h4><i class="fas fa-chart-line"></i> Trend Analysis</h4>
+            </div>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-download"></i> Export Report</h3>
+                <button class="close-btn" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <div class="export-option" onclick="exportFormat('csv')">
+                        <div class="export-icon">
+                            <i class="fas fa-file-csv"></i>
+                        </div>
+                        <div class="export-info">
+                            <h4>CSV Format</h4>
+                            <p>Compatible with Excel and spreadsheet software</p>
+                        </div>
+                    </div>
+                    
+                    <div class="export-option" onclick="exportFormat('json')">
+                        <div class="export-icon">
+                            <i class="fas fa-file-code"></i>
+                        </div>
+                        <div class="export-info">
+                            <h4>JSON Format</h4>
+                            <p>For data analysis and integration</p>
+                        </div>
+                    </div>
+                    
+                    <div class="export-option" onclick="exportFormat('pdf')">
+                        <div class="export-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="export-info">
+                            <h4>PDF Report</h4>
+                            <p>Formatted document with charts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+<script>
+    // Initialize charts
+    let attendanceChart, trendChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attendance Distribution Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        attendanceChart = new Chart(attendanceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent', 'Late', 'Excused'],
+                datasets: [{
+                    data: [
+                        {{ period_stats.present_count }},
+                        {{ period_stats.absent_count }},
+                        Math.floor({{ period_stats.present_count }} * 0.1), // Example late count
+                        Math.floor({{ period_stats.present_count }} * 0.05) // Example excused count
+                    ],
+                    backgroundColor: [
+                        '#10b981',
+                        '#ef4444',
+                        '#f59e0b',
+                        '#6b7280'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Trend Analysis Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        
+        // Example trend data (in real app, fetch from API)
+        const trendData = {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current'],
+            datasets: [{
+                label: 'Attendance Rate %',
+                data: [85, 88, 82, 90, {{ period_stats.attendance_rate }}],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        };
+        
+        trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: trendData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 50,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    
+    function exportReport() {
+        document.getElementById('exportModal').style.display = 'block';
+    }
+    
+    function closeExportModal() {
+        document.getElementById('exportModal').style.display = 'none';
+    }
+    
+    function exportFormat(format) {
+        let url;
+        
+        if (format === 'pdf') {
+            // For PDF, we would typically generate on server
+            showNotification('PDF export feature coming soon!', 'info');
+            return;
+        }
+        
+        url = `/api/export-report?type={{ report_type }}&format=${format}`;
+        
+        if (format === 'csv') {
+            // Trigger CSV download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `attendance_report_{{ report_type }}_${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else if (format === 'json') {
+            // For JSON, open in new tab
+            window.open(url, '_blank');
+        }
+        
+        closeExportModal();
+        showNotification(`Report exported as ${format.toUpperCase()}`, 'success');
+    }
+    
+    function applyDateFilter() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (startDate && endDate) {
+            // In a real app, this would filter the data
+            showNotification(`Filtering from ${startDate} to ${endDate}`, 'info');
+            // You would typically make an API call here to fetch filtered data
+        } else {
+            showNotification('Please select both start and end dates', 'warning');
+        }
+    }
+    
+    function viewDetailedReport(courseCode, classGroup, period) {
+        // In a real app, this would show a detailed modal
+        showNotification(`Viewing detailed report for ${courseCode} - ${classGroup} (${period})`, 'info');
+        
+        // Example: Open a modal with detailed information
+        // You could fetch detailed data via API and display it
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                             type === 'error' ? 'exclamation-circle' : 
+                             type === 'warning' ? 'exclamation-triangle' : 
+                             'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('exportModal');
+        if (event.target === modal) {
+            closeExportModal();
+        }
+    };
+</script>
+{% endblock %}

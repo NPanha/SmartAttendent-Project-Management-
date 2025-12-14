@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Welcome Section -->
+    <div class="welcome-card">
+        <div class="welcome-content">
+            <h2>Welcome back, {{ teacher.full_name }}! 👋</h2>
+            <p>Today is {{ current_day }}, {{ current_date }}</p>
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <div>
+                        <h3>{{ today_schedule|length }}</h3>
+                        <p>Today's Classes</p>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <i class="fas fa-user-graduate"></i>
+                    <div>
+                        <h3>{{ today_stats.active_students }}</h3>
+                        <p>Active Today</p>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <h3>{{ today_stats.attendance_rate }}%</h3>
+                        <p>Today's Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="welcome-illustration">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+    </div>
+
+    <!-- Today's Schedule -->
+    <div class="section-header">
+        <h3><i class="fas fa-calendar-day"></i> Today's Schedule</h3>
+        <a href="{{ url_for('classes') }}" class="view-all">View All Classes <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    {% if today_schedule %}
+    <div class="schedule-grid">
+        {% for class in today_schedule %}
+        <div class="schedule-card">
+            <div class="class-time">
+                <span class="time">{{ class.start_time }} - {{ class.end_time }}</span>
+                <span class="badge {{ class.type.lower() }}">{{ class.type }}</span>
+            </div>
+            <div class="class-info">
+                <h4>{{ class.course_code }} - {{ class.course_name }}</h4>
+                <p><i class="fas fa-users"></i> {{ class.class_group }} • <i class="fas fa-map-marker-alt"></i> {{ class.room }}</p>
+            </div>
+            <div class="class-attendance">
+                <div class="attendance-count">
+                    <i class="fas fa-user-check"></i>
+                    <span>{{ class.attendance_count }} attended</span>
+                </div>
+                <a href="{{ url_for('qr_generator') }}?course={{ class.course_code }}&class={{ class.class_group }}" 
+                   class="qr-btn">
+                    <i class="fas fa-qrcode"></i> Generate QR
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h4>No classes scheduled for today</h4>
+        <p>Enjoy your day off!</p>
+    </div>
+    {% endif %}
+
+    <!-- Attendance Statistics -->
+    <div class="section-header">
+        <h3><i class="fas fa-chart-pie"></i> Attendance Overview</h3>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <i class="fas fa-sun"></i>
+                <h4>Today</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ today_stats.attendance_rate }}%</div>
+                <div class="stat-details">
+                    <p><span class="present">{{ today_stats.present_count }}</span> Present</p>
+                    <p><span class="absent">{{ today_stats.absent_count }}</span> Absent</p>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ today_stats.attendance_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <i class="fas fa-calendar-week"></i>
+                <h4>This Week</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ weekly_stats.attendance_rate }}%</div>
+                <div class="stat-details">
+                    <p><span class="present">{{ weekly_stats.present_count }}</span> Present</p>
+                    <p><span class="absent">{{ weekly_stats.absent_count }}</span> Absent</p>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ weekly_stats.attendance_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <i class="fas fa-calendar-alt"></i>
+                <h4>This Month</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ monthly_stats.attendance_rate }}%</div>
+                <div class="stat-details">
+                    <p><span class="present">{{ monthly_stats.present_count }}</span> Present</p>
+                    <p><span class="absent">{{ monthly_stats.absent_count }}</span> Absent</p>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ monthly_stats.attendance_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <i class="fas fa-users"></i>
+                <h4>Students</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ today_stats.total_students }}</div>
+                <div class="stat-details">
+                    <p><span class="active">{{ today_stats.active_students }}</span> Active Today</p>
+                    <p><span class="total">{{ today_stats.total_students }}</span> Total Enrolled</p>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (today_stats.active_students / today_stats.total_students * 100) if today_stats.total_students > 0 else 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Classes -->
+    <div class="section-header">
+        <h3><i class="fas fa-calendar-alt"></i> Upcoming Classes This Week</h3>
+    </div>
+
+    <div class="upcoming-classes">
+        {% if upcoming_classes %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Time</th>
+                        <th>Course</th>
+                        <th>Class Group</th>
+                        <th>Room</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class in upcoming_classes %}
+                    <tr>
+                        <td><span class="day-badge">{{ class.day }}</span></td>
+                        <td>{{ class.time }}</td>
+                        <td>{{ class.course }}</td>
+                        <td>{{ class.class_group }}</td>
+                        <td>{{ class.room }}</td>
+                        <td><span class="type-badge">{{ class.type }}</span></td>
+                        <td>
+                            <a href="{{ url_for('qr_generator') }}?course={{ class.course.split(' - ')[0] }}&class={{ class.class_group }}" 
+                               class="action-btn">
+                                <i class="fas fa-qrcode"></i> QR
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-check"></i>
+            <h4>No upcoming classes this week</h4>
+            <p>Check back later for updates</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-header">
+        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+    </div>
+
+    <div class="quick-actions">
+        <a href="{{ url_for('qr_generator') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <h4>Generate QR</h4>
+            <p>Create attendance QR code</p>
+        </a>
+        
+        <a href="{{ url_for('classes') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h4>View Classes</h4>
+            <p>Manage your courses</p>
+        </a>
+        
+        <a href="{{ url_for('reports') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <h4>View Reports</h4>
+            <p>Attendance analytics</p>
+        </a>
+        
+        <a href="{{ url_for('profile') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-user-cog"></i>
+            </div>
+            <h4>Profile</h4>
+            <p>Account settings</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

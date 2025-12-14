@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance - Teacher Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>Smart Attendance</h1>
+                </div>
+                <p class="login-subtitle">Teacher Portal Login</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="login-form">
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> School Email
+                    </label>
+                    <input type="email" id="email" name="email" required 
+                           placeholder="teacher@school.edu.kh" 
+                           autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Enter your password"
+                           autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>© 2024 Smart Attendance System</p>
+                <p class="role-note">Access restricted to authorized teachers only</p>
+            </div>
+        </div>
+
+        <div class="login-info">
+            <div class="info-card">
+                <h2><i class="fas fa-chalkboard-teacher"></i> Teacher Features</h2>
+                <ul class="features-list">
+                    <li><i class="fas fa-qrcode"></i> Generate QR codes for attendance</li>
+                    <li><i class="fas fa-chart-line"></i> View attendance analytics</li>
+                    <li><i class="fas fa-users"></i> Manage multiple classes</li>
+                    <li><i class="fas fa-file-export"></i> Export detailed reports</li>
+                    <li><i class="fas fa-shield-alt"></i> Secure role-based access</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add floating animation to features
+        document.addEventListener('DOMContentLoaded', () => {
+            const features = document.querySelectorAll('.features-list li');
+            features.forEach((feature, index) => {
+                feature.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Auto-hide flash messages
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateY(-10px)';
+                    setTimeout(() => message.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

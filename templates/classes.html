@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}My Classes{% endblock %}
+
+{% block content %}
+<div class="classes-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-chalkboard-teacher"></i> My Classes</h2>
+            <p>Manage your courses and student groups</p>
+        </div>
+        <div class="header-actions">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="classSearch" placeholder="Search classes...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Classes Grid -->
+    <div class="classes-grid">
+        {% for class in classes %}
+        <div class="class-card">
+            <div class="class-header">
+                <div class="course-code">{{ class.course_code }}</div>
+                <div class="class-badge">{{ class.class_group }}</div>
+            </div>
+            <div class="class-body">
+                <h3 class="course-name">{{ class.course_name }}</h3>
+                <div class="class-info">
+                    <div class="info-item">
+                        <i class="fas fa-users"></i>
+                        <span>{{ class.student_count }} Students</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-book"></i>
+                        <span>Course ID: {{ class.course_id }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="class-footer">
+                <a href="{{ url_for('view_attendance', course_id=class.course_id, class_group=class.class_group) }}" 
+                   class="btn-outline">
+                    <i class="fas fa-chart-bar"></i> View Attendance
+                </a>
+                <a href="{{ url_for('qr_generator') }}?course={{ class.course_id }}&class={{ class.class_group }}" 
+                   class="btn-primary">
+                    <i class="fas fa-qrcode"></i> Generate QR
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state full-width">
+            <i class="fas fa-chalkboard"></i>
+            <h4>No classes assigned</h4>
+            <p>You haven't been assigned to any classes yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Class Statistics -->
+    {% if classes %}
+    <div class="section-header">
+    <h3><i class="fas fa-chart-line"></i> Class Statistics</h3>
+    </div>  
+
+    <div class="statistics-grid">
+        <div class="stat-card wide">
+            <div class="stat-header">
+                <i class="fas fa-layer-group"></i>
+                <h4>Total Classes</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ classes|length }}</div>
+                <p>Courses you're teaching</p>
+            </div>
+        </div>
+
+        <div class="stat-card wide">
+            <div class="stat-header">
+                <i class="fas fa-user-graduate"></i>
+                <h4>Total Students</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ classes|sum(attribute='student_count') }}</div>
+                <p>Students across all classes</p>
+            </div>
+        </div>
+
+        <div class="stat-card wide">
+            <div class="stat-header">
+                <i class="fas fa-university"></i>
+                <h4>Class Groups</h4>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ unique_class_groups }}</div>
+                <p>Different class groups</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Class search functionality
+    document.getElementById('classSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const classCards = document.querySelectorAll('.class-card');
+        
+        classCards.forEach(card => {
+            const courseCode = card.querySelector('.course-code').textContent.toLowerCase();
+            const courseName = card.querySelector('.course-name').textContent.toLowerCase();
+            const classGroup = card.querySelector('.class-badge').textContent.toLowerCase();
+            
+            if (courseCode.includes(searchTerm) || 
+                courseName.includes(searchTerm) || 
+                classGroup.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // Add animation to class cards
+    document.addEventListener('DOMContentLoaded', () => {
+        const classCards = document.querySelectorAll('.class-card');
+        classCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('fade-in');
+        });
+    });
+</script>
+{% endblock %}

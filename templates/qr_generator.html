@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}QR Generator{% endblock %}
+
+{% block content %}
+<div class="qr-generator">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-qrcode"></i> QR Code Generator</h2>
+            <p>Generate QR codes for classroom attendance</p>
+        </div>
+    </div>
+
+    <!-- QR Generation Form -->
+    <div class="qr-form-container">
+        <div class="qr-form-card">
+            <h3><i class="fas fa-cog"></i> Generate New QR Code</h3>
+            
+            <form method="POST" class="qr-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course_id"><i class="fas fa-book"></i> Select Course</label>
+                        <select id="course_id" name="course_id" required>
+                            <option value="">Choose a course...</option>
+                            {% for class in classes %}
+                            <option value="{{ class.course_id }}" 
+                                    {% if request.args.get('course') == class.course_id|string %}selected{% endif %}>
+                                {{ class.course_code }} - {{ class.course_name }} ({{ class.class_group }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="class_group"><i class="fas fa-users"></i> Class Group</label>
+                        <select id="class_group" name="class_group" required>
+                            <option value="">Select class group...</option>
+                            {% for class in classes %}
+                            <option value="{{ class.class_group }}"
+                                    {% if request.args.get('class') == class.class_group %}selected{% endif %}>
+                                {{ class.class_group }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="duration"><i class="fas fa-clock"></i> Valid Duration</label>
+                    <div class="duration-options">
+                        <label class="duration-option">
+                            <input type="radio" name="duration" value="5" checked>
+                            <span>5 minutes</span>
+                        </label>
+                        <label class="duration-option">
+                            <input type="radio" name="duration" value="10">
+                            <span>10 minutes</span>
+                        </label>
+                        <label class="duration-option">
+                            <input type="radio" name="duration" value="15">
+                            <span>15 minutes</span>
+                        </label>
+                        <label class="duration-option">
+                            <input type="radio" name="duration" value="30">
+                            <span>30 minutes</span>
+                        </label>
+                        <label class="duration-option">
+                            <input type="radio" name="duration" value="60">
+                            <span>1 hour</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="generate-btn">
+                    <i class="fas fa-bolt"></i> Generate QR Code
+                </button>
+            </form>
+        </div>
+
+        <!-- QR Display Section -->
+        {% if qr_data and generated %}
+        <div class="qr-display-card">
+            <div class="qr-header">
+                <h3><i class="fas fa-check-circle"></i> QR Code Generated!</h3>
+                <div class="qr-timer" id="qrTimer">
+                    <i class="fas fa-clock"></i>
+                    <span>Valid for: <span id="countdown">{{ qr_data.duration * 60 }}</span>s</span>
+                </div>
+            </div>
+            
+            <div class="qr-content">
+                <div class="qr-image-container">
+                    <img src="data:image/png;base64,{{ qr_data.qr_image }}" 
+                         alt="QR Code" 
+                         class="qr-image">
+                    <div class="qr-overlay">
+                        <i class="fas fa-sync-alt spin"></i>
+                    </div>
+                </div>
+                
+                <div class="qr-details">
+                    <div class="detail-item">
+                        <i class="fas fa-book"></i>
+                        <div>
+                            <strong>Course:</strong>
+                            <p>{{ qr_data.course_code }} - {{ qr_data.course_name }}</p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <strong>Class:</strong>
+                            <p>{{ qr_data.class_group }}</p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <div>
+                            <strong>Valid From:</strong>
+                            <p>{{ qr_data.valid_from }}</p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar-times"></i>
+                        <div>
+                            <strong>Valid Until:</strong>
+                            <p>{{ qr_data.valid_until }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="qr-actions">
+                <button class="btn-outline" onclick="downloadQR()">
+                    <i class="fas fa-download"></i> Download PNG
+                </button>
+                <button class="btn-primary" onclick="printQR()">
+                    <i class="fas fa-print"></i> Print QR
+                </button>
+                <button class="btn-success" onclick="generateNewQR()">
+                    <i class="fas fa-redo"></i> Generate New
+                </button>
+            </div>
+            
+            <div class="qr-instructions">
+                <h4><i class="fas fa-info-circle"></i> Instructions:</h4>
+                <ol>
+                    <li>Display this QR code on the classroom projector</li>
+                    <li>Students will scan it using their mobile app</li>
+                    <li>Attendance will be automatically recorded</li>
+                    <li>QR code will expire after {{ qr_data.duration }} minutes</li>
+                </ol>
+            </div>
+        </div>
+        {% else %}
+        <div class="qr-placeholder">
+            <div class="placeholder-content">
+                <i class="fas fa-qrcode"></i>
+                <h4>No QR Code Generated</h4>
+                <p>Fill in the form and click "Generate QR Code" to create a new attendance QR code.</p>
+                <div class="placeholder-tips">
+                    <div class="tip">
+                        <i class="fas fa-lightbulb"></i>
+                        <p>QR codes automatically expire after the selected duration</p>
+                    </div>
+                    <div class="tip">
+                        <i class="fas fa-shield-alt"></i>
+                        <p>Each QR code is unique and encrypted for security</p>
+                    </div>
+                    <div class="tip">
+                        <i class="fas fa-mobile-alt"></i>
+                        <p>Students can scan from up to 2 meters away</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent QR Codes -->
+    <div class="section-header">
+        <h3><i class="fas fa-history"></i> Recent QR Codes</h3>
+    </div>
+    
+    <div class="recent-qr-codes">
+        <!-- This would be populated from database in a real app -->
+        <div class="empty-state">
+            <i class="fas fa-history"></i>
+            <h4>No recent QR codes</h4>
+            <p>Generated QR codes will appear here</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/qr_generator.js') }}"></script>
+<script>
+    // Update class group options based on selected course
+    document.getElementById('course_id').addEventListener('change', function() {
+        const courseId = this.value;
+        const classGroupSelect = document.getElementById('class_group');
+        
+        // Clear existing options
+        classGroupSelect.innerHTML = '<option value="">Select class group...</option>';
+        
+        // Filter classes for selected course
+        const classes = {{ classes|tojson }};
+        const courseClasses = classes.filter(c => c.course_id.toString() === courseId);
+        
+        // Add filtered options
+        courseClasses.forEach(classInfo => {
+            const option = document.createElement('option');
+            option.value = classInfo.class_group;
+            option.textContent = classInfo.class_group;
+            classGroupSelect.appendChild(option);
+        });
+    });
+    
+    {% if qr_data and generated %}
+    // Countdown timer for QR code
+    let timeLeft = {{ qr_data.duration * 60 }};
+    const countdownElement = document.getElementById('countdown');
+    
+    const countdown = setInterval(function() {
+        timeLeft--;
+        countdownElement.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            showNotification('QR code has expired! Generate a new one.', 'warning');
+        }
+    }, 1000);
+    
+    function downloadQR() {
+        const qrImage = document.querySelector('.qr-image');
+        if (!qrImage) {
+        showNotification('QR code not available for download', 'error');
+        return;
+        }
+        const link = document.createElement('a');
+        link.href = qrImage.src;
+        link.download = `qr_attendance_{{ qr_data.course_code }}_{{ qr_data.class_group }}_{{ qr_data.valid_from.split(' ')[0] }}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification('QR code downloaded!', 'success');
+    }
+    
+    function printQR() {
+        const qrImage = document.querySelector('.qr-image');
+        if (!qrImage) {
+            showNotification('QR code not available for printing', 'error');
+            return;
+        }
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Attendance QR Code - {{ qr_data.course_code }}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            text-align: center; 
+                            padding: 20px;
+                        }
+                        .print-header {
+                            margin-bottom: 20px;
+                        }
+                        .qr-image {
+                            max-width: 400px;
+                            margin: 20px auto;
+                        }
+                        .details {
+                            text-align: left;
+                            max-width: 400px;
+                            margin: 0 auto;
+                            padding: 20px;
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h2>Smart Attendance System</h2>
+                        <h3>QR Code for {{ qr_data.course_code }} - {{ qr_data.class_group }}</h3>
+                    </div>
+                    <img src="${qrImage.src}" class="qr-image">
+                    <div class="details">
+                        <p><strong>Course:</strong> {{ qr_data.course_code }} - {{ qr_data.course_name }}</p>
+                        <p><strong>Class Group:</strong> {{ qr_data.class_group }}</p>
+                        <p><strong>Valid From:</strong> {{ qr_data.valid_from }}</p>
+                        <p><strong>Valid Until:</strong> {{ qr_data.valid_until }}</p>
+                        <p><strong>Generated By:</strong> {{ teacher.full_name }}</p>
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    function generateNewQR() {
+        // Clear the form and QR display
+        document.querySelector('.qr-form').reset();
+        window.location.href = "{{ url_for('qr_generator') }}";
+    }
+    {% endif %}
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                             type === 'error' ? 'exclamation-circle' : 
+                             type === 'warning' ? 'exclamation-triangle' : 
+                             'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

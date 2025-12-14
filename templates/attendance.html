@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance - {{ course.course_code }}{% endblock %}
+
+{% block content %}
+<div class="attendance-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-clipboard-check"></i> {{ course.course_code }} - {{ course.course_name }}</h2>
+            <p>{{ class_group }} • Attendance Records</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('qr_generator') }}?course={{ course.course_code }}&class={{ class_group }}" 
+               class="btn-primary">
+                <i class="fas fa-qrcode"></i> Generate QR
+            </a>
+            <button class="btn-outline" onclick="exportAttendance()">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Attendance Summary -->
+    <div class="attendance-summary">
+        <div class="summary-card">
+            <div class="summary-item">
+                <i class="fas fa-users"></i>
+                <div>
+                    <h3>{{ total_students }}</h3>
+                    <p>Total Students</p>
+                </div>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-user-check"></i>
+                <div>
+                    <h3>{{ present_students }}</h3>
+                    <p>Good Attendance (≥75%)</p>
+                </div>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-chart-line"></i>
+                <div>
+                    <h3>{{ avg_attendance }}%</h3>
+                    <p>Average Attendance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filter-group">
+            <label for="periodFilter"><i class="fas fa-calendar"></i> Period:</label>
+            <select id="periodFilter" onchange="filterAttendance()">
+                <option value="all">All Time</option>
+                <option value="month">This Month</option>
+                <option value="week">This Week</option>
+                <option value="today">Today</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="searchStudent"><i class="fas fa-search"></i> Search:</label>
+            <input type="text" id="searchStudent" placeholder="Search students..." oninput="searchStudents()">
+        </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="table-responsive">
+        <table class="data-table" id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Classes Attended</th>
+                    <th>Total Classes</th>
+                    <th>Attendance %</th>
+                    <th>Last Attendance</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in attendance_data %}
+                <tr data-student-id="{{ student.student_id }}">
+                    <td>{{ student.student_id }}</td>
+                    <td>{{ student.full_name }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>{{ student.attended }}</td>
+                    <td>{{ student.total_classes }}</td>
+                    <td>
+                        <div class="attendance-percentage">
+                            <div class="percentage-bar">
+                                <div class="percentage-fill" 
+                                     style="width: {{ student.attendance_percentage }}%;
+                                            background: {% if student.attendance_percentage >= 75 %}#10b981
+                                                      {% elif student.attendance_percentage >= 50 %}#f59e0b
+                                                      {% else %}#ef4444{% endif %};">
+                                </div>
+                            </div>
+                            <span class="percentage-text">{{ student.attendance_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>{{ student.last_attendance }}</td>
+                    <td>
+                        <span class="status-badge {% if student.attendance_percentage >= 75 %}present
+                                                  {% elif student.attendance_percentage >= 50 %}warning
+                                                  {% else %}absent{% endif %}">
+                            {% if student.attendance_percentage >= 75 %}Good
+                            {% elif student.attendance_percentage >= 50 %}Fair
+                            {% else %}Poor{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn edit" onclick="editAttendance('{{ student.student_id }}')"
+                                    title="Edit Attendance">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn view" 
+                                    onclick="viewStudentDetails('{{ student.student_id }}')"
+                                    title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">No attendance records found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit Attendance Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Attendance</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editAttendanceForm">
+                    <input type="hidden" id="editStudentId">
+                    <input type="hidden" id="editCourseId" value="{{ course.course_id }}">
+                    
+                    <div class="form-group">
+                        <label for="editDate">Date:</label>
+                        <input type="date" id="editDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editStatus">Status:</label>
+                        <select id="editStatus" required>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Late">Late</option>
+                            <option value="Excused">Excused</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editMethod">Method:</label>
+                        <select id="editMethod">
+                            <option value="Manual">Manual</option>
+                            <option value="QR Code">QR Code</option>
+                            <option value="Face Recognition">Face Recognition</option>
+                        </select>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn-outline" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+<script>
+    // Initialize variables
+    const courseId = {{ course.course_id }};
+    const classGroup = "{{ class_group }}";
+    let allStudents = {{ attendance_data|tojson }};
+    
+    function filterAttendance() {
+        const period = document.getElementById('periodFilter').value;
+        
+        fetch(`/api/get-attendance-details?course_id=${courseId}&class_group=${classGroup}&period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateTable(data.attendance_data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error loading attendance data', 'error');
+            });
+    }
+    
+    function searchStudents() {
+        const searchTerm = document.getElementById('searchStudent').value.toLowerCase();
+        const rows = document.querySelectorAll('#attendanceTable tbody tr');
+        
+        rows.forEach(row => {
+            const studentId = row.cells[0].textContent.toLowerCase();
+            const name = row.cells[1].textContent.toLowerCase();
+            const email = row.cells[2].textContent.toLowerCase();
+            
+            if (studentId.includes(searchTerm) || name.includes(searchTerm) || email.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    function updateTable(data) {
+        const tbody = document.querySelector('#attendanceTable tbody');
+        tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center">No attendance records found</td></tr>';
+            return;
+        }
+        
+        data.forEach(student => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-student-id', student.student_id);
+            
+            // Determine status class
+            let statusClass = 'absent';
+            let statusText = 'Poor';
+            if (student.attendance_percentage >= 75) {
+                statusClass = 'present';
+                statusText = 'Good';
+            } else if (student.attendance_percentage >= 50) {
+                statusClass = 'warning';
+                statusText = 'Fair';
+            }
+            
+            row.innerHTML = `
+                <td>${student.student_id}</td>
+                <td>${student.full_name}</td>
+                <td>${student.email}</td>
+                <td>${student.attended}</td>
+                <td>${student.total_classes}</td>
+                <td>
+                    <div class="attendance-percentage">
+                        <div class="percentage-bar">
+                            <div class="percentage-fill" 
+                                 style="width: ${student.attendance_percentage}%;
+                                        background: ${student.attendance_percentage >= 75 ? '#10b981' : 
+                                                     student.attendance_percentage >= 50 ? '#f59e0b' : '#ef4444'};">
+                            </div>
+                        </div>
+                        <span class="percentage-text">${student.attendance_percentage}%</span>
+                    </div>
+                </td>
+                <td>${student.last_attendance}</td>
+                <td>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn edit" onclick="editAttendance('${student.student_id}')"
+                                title="Edit Attendance">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn view" 
+                                onclick="viewStudentDetails('${student.student_id}')"
+                                title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+    
+    function exportAttendance() {
+        const period = document.getElementById('periodFilter').value;
+        const url = `/api/export-report?type=${period}&format=csv`;
+        
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `attendance_${course.course_code}_${classGroup}_${period}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function editAttendance(studentId) {
+        const student = allStudents.find(s => s.student_id === studentId);
+        if (!student) return;
+        
+        document.getElementById('editStudentId').value = studentId;
+        document.getElementById('editDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('editModal').style.display = 'block';
+    }
+    
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+    
+    // Handle form submission
+    document.getElementById('editAttendanceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            student_id: document.getElementById('editStudentId').value,
+            course_id: document.getElementById('editCourseId').value,
+            date: document.getElementById('editDate').value,
+            status: document.getElementById('editStatus').value,
+            method: document.getElementById('editMethod').value
+        };
+        
+        fetch('/api/update-attendance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                closeModal();
+                filterAttendance(); // Refresh table
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error updating attendance', 'error');
+        });
+    });
+    
+    function viewStudentDetails(studentId) {
+        // In a real app, this would show more detailed student information
+        showNotification(`Viewing details for student ${studentId}`, 'info');
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                             type === 'error' ? 'exclamation-circle' : 
+                             'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}
