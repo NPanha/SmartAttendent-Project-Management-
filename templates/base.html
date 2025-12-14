@@ -53,6 +53,12 @@
                     <i class="fas fa-qrcode"></i>
                     <span>Scan QR</span>
                 </a>
+                
+                <!-- ADD THIS LINE -->
+                <a href="{{ url_for('face_recognition') }}" class="sidebar-link {% if request.path == url_for('face_recognition') %}active{% endif %}">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Face Recognition</span>
+                </a>
                 <a href="{{ url_for('my_attendance') }}" class="sidebar-link {% if request.path == url_for('my_attendance') %}active{% endif %}">
                     <i class="fas fa-calendar-check"></i>
                     <span>My Attendance</span>

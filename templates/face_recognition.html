@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Face Recognition{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-800">Face Recognition Attendance</h1>
+        <p class="text-gray-600 mt-2">Use face recognition to mark your attendance securely</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Face Recognition Container -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Face Scanner</h2>
+                <p class="text-gray-500 text-sm">Position your face within the frame and ensure good lighting</p>
+            </div>
+            
+            <!-- Camera Feed -->
+            <div id="cameraContainer" class="relative w-full max-w-md mx-auto mb-6">
+                <video id="video" autoplay playsinline class="w-full h-auto rounded-lg border-2 border-gray-300"></video>
+                <div id="faceOverlay" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-blue-500 border-dashed rounded-lg"></div>
+                <canvas id="canvas" class="hidden"></canvas>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex flex-wrap gap-4 justify-center mb-6">
+                <button id="startCamera" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center space-x-2">
+                    <i class="fas fa-video"></i>
+                    <span>Start Camera</span>
+                </button>
+                <button id="stopCamera" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center space-x-2">
+                    <i class="fas fa-video-slash"></i>
+                    <span>Stop Camera</span>
+                </button>
+                <button id="captureFace" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center space-x-2" disabled>
+                    <i class="fas fa-camera"></i>
+                    <span>Capture & Verify</span>
+                </button>
+            </div>
+            
+            <!-- Status Indicators -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-gray-800" id="detectionCount">0</div>
+                    <div class="text-sm text-gray-600">Faces Detected</div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-gray-800" id="confidenceLevel">0%</div>
+                    <div class="text-sm text-gray-600">Confidence</div>
+                </div>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                    <div>
+                        <h4 class="font-semibold text-blue-800">Face Recognition Instructions</h4>
+                        <ul class="mt-2 space-y-1 text-sm text-blue-700">
+                            <li>• Ensure good lighting on your face</li>
+                            <li>• Remove sunglasses or hats</li>
+                            <li>• Look directly at the camera</li>
+                            <li>• Keep your face within the dashed frame</li>
+                            <li>• Stay still during capture</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Class & Status -->
+        <div class="space-y-8">
+            <!-- Current Class Info -->
+            <div class="gradient-card text-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-chalkboard-teacher text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold">Current Class</h3>
+                        <p class="text-blue-100" id="currentClassCourse">{{ current_class.course if current_class else 'No active class' }}</p>
+                    </div>
+                </div>
+                
+                {% if current_class %}
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-100">Instructor:</span>
+                        <span class="font-semibold">{{ current_class.instructor }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-100">Time:</span>
+                        <span class="font-semibold">{{ current_class.time }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-100">Room:</span>
+                        <span class="font-semibold">{{ current_class.room }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Verification Status -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Verification Status</h3>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">Student Identity</h4>
+                                    <p class="text-sm text-gray-600">{{ session.get('student_name', 'Student') }}</p>
+                                </div>
+                            </div>
+                            <span id="identityStatus" class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Pending
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">Attendance</h4>
+                                    <p class="text-sm text-gray-600">Mark attendance status</p>
+                                </div>
+                            </div>
+                            <span id="attendanceStatus" class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Not Marked
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Face Enrollment (for first time users) -->
+                <div id="enrollmentSection" class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="font-semibold text-gray-800 mb-3">Face Enrollment</h4>
+                    <p class="text-sm text-gray-600 mb-4">For first-time users, please enroll your face for future recognition.</p>
+                    <button id="enrollFace" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Enroll My Face</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Attendance History -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Face Attendance</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-check text-green-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-800">Verified Attendance</h4>
+                                <p class="text-sm text-gray-600">Today, 09:30 AM</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Success
+                        </span>
+                    </div>
+                    
+                    <div class="text-center py-4">
+                        <p class="text-gray-500 text-sm">No recent face attendance records</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Result Modal -->
+<div id="faceResultModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div id="faceResultIcon" class="text-center mb-4">
+            <!-- Icon will be inserted by JS -->
+        </div>
+        <h3 id="faceResultTitle" class="text-xl font-bold text-center mb-2"></h3>
+        <p id="faceResultMessage" class="text-gray-600 text-center mb-6"></p>
+        <div class="flex space-x-3">
+            <button id="closeFaceResult" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition">
+                Close
+            </button>
+            <button id="tryAgain" class="flex-1 gradient-bg hover:opacity-90 text-white font-semibold py-3 rounded-lg transition">
+                Try Again
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Enrollment Modal -->
+<div id="enrollmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-800">Face Enrollment</h3>
+                <button id="closeEnrollmentModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-gray-600 mb-6">Please follow these steps to enroll your face for attendance:</p>
+            
+            <div class="space-y-4 mb-6">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="font-bold">1</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-800">Start Camera</h4>
+                        <p class="text-gray-600 text-sm mt-1">Click "Start Camera" button</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="font-bold">2</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-800">Capture Images</h4>
+                        <p class="text-gray-600 text-sm mt-1">We will capture multiple images from different angles</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="font-bold">3</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-800">Training</h4>
+                        <p class="text-gray-600 text-sm mt-1">System will train the model with your face data</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mb-6">
+                <div class="w-32 h-32 mx-auto bg-gray-200 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-user text-4xl text-gray-400"></i>
+                </div>
+                <p class="text-sm text-gray-500">Face preview will appear here</p>
+            </div>
+            
+            <div class="flex space-x-3 pt-6 border-t border-gray-200">
+                <button id="cancelEnrollment" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition">
+                    Cancel
+                </button>
+                <button id="startEnrollment" class="flex-1 gradient-bg hover:opacity-90 text-white font-semibold py-3 rounded-lg transition">
+                    Start Enrollment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/face-recognition.js') }}"></script>
+{% endblock %}
