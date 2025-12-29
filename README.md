@@ -73,45 +73,45 @@ Database (SQLite / PostgreSQL / MySQL)
 ## Attendance Flow
 ### **QR Mode:**
 
-Student shows their QR code
+- Student shows their QR code
 
-Camera scans
+- Camera scans
 
-System reads student_id
+- System reads student_id
 
-Attendance saved instantly
+- Attendance saved instantly
 
 ### **Face Mode:**
 
-Student stands in front of camera
+- Student stands in front of camera
 
-System captures & compares face embedding
+- System captures & compares face embedding
 
-If matched → attendance recorded
+- If matched → attendance recorded
 
 ## Data Privacy
 
-Stores only face embeddings, not raw face images
+- Stores only face embeddings, not raw face images
 
-Supports HTTPS when deployed
+- Supports HTTPS when deployed
 
-Secure API endpoints recommended
+- Secure API endpoints recommended
 
-Access control recommended for production
+- Access control recommended for production
 
 ## Roadmap (Future Enhancements)
 
- Fingerprint Scanner Integration
+- Fingerprint Scanner Integration
 
- Admin Authentication / Login
+- Admin Authentication / Login
 
- Student Mobile App (Flutter)
+- Student Mobile App (Flutter)
 
- Attendance Statistics Dashboard
+- Attendance Statistics Dashboard
 
- Export attendance reports
+- Export attendance reports
 
- Live class monitoring with camera feed
+- Live class monitoring with camera feed
 
 ## 🤝 Contributing
 
