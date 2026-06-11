@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-user-tie"></i> Teacher Profile</h2>
+            <p>Manage your account and preferences</p>
+        </div>
+    </div>
+
+    <div class="profile-container">
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="profile-info">
+                    <h3>{{ teacher.full_name }}</h3>
+                    <p class="profile-role">Teacher</p>
+                    <p class="profile-email"><i class="fas fa-envelope"></i> {{ teacher.email }}</p>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <h4>{{ total_classes }}</h4>
+                        <p>Classes</p>
+                    </div>
+                    <div class="stat">
+                        <h4>{{ today_stats.total_students }}</h4>
+                        <p>Students</p>
+                    </div>
+                    <div class="stat">
+                        <h4>{{ today_stats.attendance_rate }}%</h4>
+                        <p>Today's Rate</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-details">
+                <div class="detail-section">
+                    <h4><i class="fas fa-info-circle"></i> Account Information</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Teacher ID:</strong>
+                            <span>T{{ teacher.teacher_id }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Full Name:</strong>
+                            <span>{{ teacher.full_name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Email:</strong>
+                            <span>{{ teacher.email }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Account Created:</strong>
+                            <span>{{ teacher.created_at }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Last Login:</strong>
+                            <span>Today, {{ datetime.now().strftime('%H:%M') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4><i class="fas fa-chart-line"></i> Performance Overview</h4>
+                    <div class="performance-stats">
+                        <div class="performance-item">
+                            <div class="performance-icon success">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div>
+                                <h5>Best Attendance Rate</h5>
+                                <p>PM Course - 98%</p>
+                            </div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-icon warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <h5>Average Class Duration</h5>
+                                <p>2 hours per session</p>
+                            </div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-icon info">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div>
+                                <h5>Active Days This Month</h5>
+                                <p>15 out of 20 weekdays</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Card -->
+        <div class="settings-card">
+            <h3><i class="fas fa-cog"></i> Account Settings</h3>
+            
+            <div class="settings-section">
+                <h4><i class="fas fa-shield-alt"></i> Security</h4>
+                <form id="passwordForm" class="settings-form">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-key"></i> Update Password
+                    </button>
+                </form>
+            </div>
+
+            <div class="settings-section">
+                <h4><i class="fas fa-bell"></i> Notifications</h4>
+                <div class="notification-settings">
+                    <div class="notification-item">
+                        <div>
+                            <h5>Email Notifications</h5>
+                            <p>Receive attendance reports via email</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="notification-item">
+                        <div>
+                            <h5>Low Attendance Alerts</h5>
+                            <p>Get notified when attendance drops below 70%</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="notification-item">
+                        <div>
+                            <h5>Class Reminders</h5>
+                            <p>Reminders 30 minutes before each class</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4><i class="fas fa-palette"></i> Appearance</h4>
+                <div class="theme-options">
+                    <div class="theme-option active" onclick="setTheme('light')">
+                        <div class="theme-preview light"></div>
+                        <span>Light Mode</span>
+                    </div>
+                    <div class="theme-option" onclick="setTheme('dark')">
+                        <div class="theme-preview dark"></div>
+                        <span>Dark Mode</span>
+                    </div>
+                    <div class="theme-option" onclick="setTheme('auto')">
+                        <div class="theme-preview auto"></div>
+                        <span>Auto</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="danger-zone">
+                <h4><i class="fas fa-exclamation-triangle"></i> Danger Zone</h4>
+                <div class="danger-actions">
+                    <button class="btn-danger" onclick="exportAllData()">
+                        <i class="fas fa-download"></i> Export All Data
+                    </button>
+                    <button class="btn-danger" onclick="requestAccountDeletion()">
+                        <i class="fas fa-trash-alt"></i> Request Account Deletion
+                    </button>
+                </div>
+                <p class="danger-note">These actions cannot be undone. Please proceed with caution.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Password update form
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (newPassword !== confirmPassword) {
+            showNotification('New passwords do not match!', 'error');
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            showNotification('Password must be at least 6 characters long', 'error');
+            return;
+        }
+        
+        // In a real app, make API call to update password
+        // For now, simulate success
+        setTimeout(() => {
+            showNotification('Password updated successfully!', 'success');
+            document.getElementById('passwordForm').reset();
+        }, 1000);
+    });
+    
+    // Theme switching
+    function setTheme(theme) {
+        // Remove active class from all theme options
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        
+        // Add active class to selected option
+        event.target.closest('.theme-option').classList.add('active');
+        
+        // Apply theme
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        
+        showNotification(`Theme changed to ${theme} mode`, 'success');
+    }
+    
+    // Load saved theme
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        // Activate saved theme option
+        document.querySelectorAll('.theme-option').forEach(option => {
+            if (option.querySelector('.theme-preview').classList.contains(savedTheme)) {
+                option.classList.add('active');
+            }
+        });
+    });
+    
+    // Export all data
+    function exportAllData() {
+        if (confirm('This will export all your attendance data. Continue?')) {
+            showNotification('Preparing data export...', 'info');
+            // In real app, trigger export process
+            setTimeout(() => {
+                showNotification('Data export completed! Check your email.', 'success');
+            }, 2000);
+        }
+    }
+    
+    // Request account deletion
+    function requestAccountDeletion() {
+        if (confirm('This will permanently delete your account and all associated data. This action cannot be undone. Are you sure?')) {
+            const reason = prompt('Please provide a reason for account deletion:');
+            if (reason) {
+                showNotification('Account deletion requested. Admin will contact you shortly.', 'info');
+            }
+        }
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                             type === 'error' ? 'exclamation-circle' : 
+                             type === 'warning' ? 'exclamation-triangle' : 
+                             'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}
