@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">My Profile</h1>
+        <p class="text-gray-600">Manage your personal information and account settings</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column - Profile Info -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Personal Information Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Personal Information</h2>
+                    <button id="editProfileBtn" class="text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-2">
+                        <i class="fas fa-edit"></i>
+                        <span>Edit</span>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Student ID</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ student.student_id }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Full Name</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ student.name }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Email</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ student.email }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Phone</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ student.phone }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Date of Birth</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ student.dob }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Gender</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ student.gender }}</div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-500 mb-2">Address</label>
+                    <div class="text-lg font-semibold text-gray-800">{{ student.address }}</div>
+                </div>
+            </div>
+
+            <!-- Academic Information -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6">Academic Information</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Program</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ academic.program }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Batch</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ academic.batch }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Semester</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ academic.semester }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-2">Academic Year</label>
+                        <div class="text-lg font-semibold text-gray-800">{{ academic.academic_year }}</div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-500 mb-2">Enrolled Courses</label>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        {% for course in academic.courses %}
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                            {{ course }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6">Change Password</h2>
+                
+                <form id="changePasswordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                        <div class="relative">
+                            <input type="password" id="currentPassword" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" class="absolute right-3 top-3 text-gray-500 hover:text-gray-700" onclick="togglePassword('currentPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                        <div class="relative">
+                            <input type="password" id="newPassword" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" class="absolute right-3 top-3 text-gray-500 hover:text-gray-700" onclick="togglePassword('newPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" class="absolute right-3 top-3 text-gray-500 hover:text-gray-700" onclick="togglePassword('confirmPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button type="submit" class="gradient-bg text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column - Profile Sidebar -->
+        <div class="space-y-8">
+            <!-- Profile Picture Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="text-center">
+                    <div class="relative inline-block">
+                        <div class="w-32 h-32 rounded-full gradient-bg mx-auto mb-4 flex items-center justify-center text-white text-5xl">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <button class="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition">
+                            <i class="fas fa-camera text-gray-700"></i>
+                        </button>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">{{ student.name }}</h3>
+                    <p class="text-gray-600">{{ student.student_id }}</p>
+                    <p class="text-sm text-gray-500 mt-2">{{ academic.program }}</p>
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Attendance Rate</span>
+                        <span class="font-bold text-gray-800">{{ stats.overall_attendance }}%</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Classes Attended</span>
+                        <span class="font-bold text-gray-800">{{ stats.classes_attended }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600">Classes Missed</span>
+                        <span class="font-bold text-gray-800">{{ stats.classes_missed }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{{ url_for('scan_qr') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition group">
+                        <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                            <i class="fas fa-qrcode text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">Scan QR Code</h4>
+                            <p class="text-sm text-gray-500">Mark today's attendance</p>
+                        </div>
+                    </a>
+                    
+                    <a href="{{ url_for('timetable') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition group">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar-alt text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">View Schedule</h4>
+                            <p class="text-sm text-gray-500">Check upcoming classes</p>
+                        </div>
+                    </a>
+                    
+                    <button id="exportDataBtn" class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition group">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-export text-green-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">Export Data</h4>
+                            <p class="text-sm text-gray-500">Download attendance records</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Account Status -->
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-6">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">Account Status</h3>
+                        <p class="text-green-100">Active & Verified</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-green-100">Last Login</span>
+                        <span class="font-semibold">{{ last_login }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-green-100">Account Created</span>
+                        <span class="font-semibold">{{ account_created }}</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <button class="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-3 rounded-lg transition">
+                        View Login History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-800">Edit Profile</h3>
+                <button id="closeEditModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <form id="editProfileForm" class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" name="name" value="{{ student.name }}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" name="email" value="{{ student.email }}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" name="phone" value="{{ student.phone }}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                    <input type="date" name="dob" value="{{ student.dob }}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea name="address" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ student.address }}</textarea>
+            </div>
+            
+            <div class="flex space-x-3 pt-6 border-t border-gray-200">
+                <button type="button" id="cancelEdit" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 gradient-bg hover:opacity-90 text-white font-semibold py-3 rounded-lg transition">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}

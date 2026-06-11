@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Scan QR{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-800">Scan QR Code for Attendance</h1>
+        <p class="text-gray-600 mt-2">Position the QR code within the scanner frame to mark your attendance</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- QR Scanner Container -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Scanner</h2>
+                <p class="text-gray-500 text-sm">Make sure you have good lighting and the QR code is clear</p>
+            </div>
+            
+            <div id="qr-reader" class="w-full max-w-md mx-auto mb-6"></div>
+            
+            <div class="text-center">
+                <button id="toggleCamera" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center space-x-2 mx-auto">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Switch Camera</span>
+                </button>
+            </div>
+
+
+            <!-- Add these buttons in the scanner section after the existing toggle camera button -->
+            <div class="flex flex-wrap gap-4 justify-center mt-4">
+                <button id="cameraToggle" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center space-x-2">
+                    <i class="fas fa-video"></i>
+                    <span>Start Camera</span>
+                </button>
+                <button id="uploadQr" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center space-x-2">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload QR Image</span>
+                </button>
+            </div>
+
+            
+
+            <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                    <div>
+                        <h4 class="font-semibold text-blue-800">Important Notes</h4>
+                        <ul class="mt-2 space-y-1 text-sm text-blue-700">
+                            <li>• QR codes are valid only during class hours</li>
+                            <li>• Each QR can be scanned once per session</li>
+                            <li>• Keep the QR code steady for better scanning</li>
+                            <li>• Contact admin if you face any issues</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions & Current Class -->
+        <div class="space-y-8">
+            <!-- Current Class Info -->
+            <div class="gradient-card text-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-chalkboard-teacher text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold">Current Class</h3>
+                        <p class="text-blue-100">{{ current_class.course if current_class else 'No active class' }}</p>
+                    </div>
+                </div>
+                
+                {% if current_class %}
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-100">Instructor:</span>
+                        <span class="font-semibold">{{ current_class.instructor }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-100">Time:</span>
+                        <span class="font-semibold">{{ current_class.time }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-100">Room:</span>
+                        <span class="font-semibold">{{ current_class.room }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Scanning Instructions -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">How to Scan</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="font-bold">1</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">Position Your Device</h4>
+                            <p class="text-gray-600 text-sm mt-1">Hold your device steady about 6-8 inches from the QR code</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="font-bold">2</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">Align QR Code</h4>
+                            <p class="text-gray-600 text-sm mt-1">Make sure the QR code is within the scanning frame</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="font-bold">3</span>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800">Wait for Confirmation</h4>
+                            <p class="text-gray-600 text-sm mt-1">Hold still until you hear the beep and see confirmation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Status -->
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <h4 class="font-semibold text-gray-800 mb-3">Today's Attendance Status</h4>
+                    <div class="space-y-2">
+                        {% for class in today_classes %}
+                        <div class="flex justify-between items-center p-3 rounded-lg {% if class.attended %}bg-green-50{% else %}bg-gray-50{% endif %}">
+                            <div>
+                                <span class="font-medium">{{ class.course }}</span>
+                                <span class="text-sm text-gray-500 ml-2">{{ class.time }}</span>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                {% if class.attended %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {% if class.attended %}Marked{% else %}Pending{% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scan Result Modal -->
+<div id="scanResultModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div id="resultIcon" class="text-center mb-4">
+            <!-- Icon will be inserted by JS -->
+        </div>
+        <h3 id="resultTitle" class="text-xl font-bold text-center mb-2"></h3>
+        <p id="resultMessage" class="text-gray-600 text-center mb-6"></p>
+        <div class="flex space-x-3">
+            <button id="closeResult" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition">
+                Close
+            </button>
+            <button id="scanAgain" class="flex-1 gradient-bg hover:opacity-90 text-white font-semibold py-3 rounded-lg transition">
+                Scan Again
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/qr-scanner.js') }}"></script>
+{% endblock %}

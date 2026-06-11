@@ -1,0 +1,290 @@
+-- Create database
+CREATE DATABASE smart_attendance;
+
+-- Connect to the database
+\c smart_attendance;
+
+-- Create tables
+CREATE TABLE students (
+    student_id VARCHAR(20) PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10),
+    dob DATE,
+    phone_number VARCHAR(20),
+    class_group VARCHAR(20) NOT NULL,
+    edu_email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE teachers (
+    teacher_id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE courses (
+    course_id SERIAL PRIMARY KEY,
+    course_code VARCHAR(20) UNIQUE NOT NULL,
+    course_name VARCHAR(100) NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE timetable (
+    timetable_id SERIAL PRIMARY KEY,
+    day_of_week VARCHAR(10) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    course_id INTEGER REFERENCES courses(course_id),
+    teacher_id INTEGER REFERENCES teachers(teacher_id),
+    room VARCHAR(20),
+    class_group VARCHAR(20) NOT NULL,
+    type VARCHAR(20) DEFAULT 'Course'
+);
+
+CREATE TABLE attendance (
+    attendance_id SERIAL PRIMARY KEY,
+    student_id VARCHAR(20) REFERENCES students(student_id),
+    course_id INTEGER REFERENCES courses(course_id),
+    attendance_date DATE NOT NULL,
+    attendance_time TIME NOT NULL,
+    status VARCHAR(20) DEFAULT 'Present',
+    method VARCHAR(20) DEFAULT 'QR Code',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE qr_codes (
+    qr_id SERIAL PRIMARY KEY,
+    qr_data TEXT NOT NULL,
+    course_id INTEGER REFERENCES courses(course_id),
+    class_group VARCHAR(20),
+    valid_from TIMESTAMP NOT NULL,
+    valid_until TIMESTAMP NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE face_data (
+    face_id SERIAL PRIMARY KEY,
+    student_id VARCHAR(20) REFERENCES students(student_id),
+    face_encoding BYTEA,
+    image_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert sample data
+INSERT INTO students (student_id, full_name, gender, dob, phone_number, class_group, edu_email, password, address) VALUES
+('e20210320', 'BUN Ratnatepy', 'F', '2003-12-11', '011434668', 'I5-AMS-A', 'e20210320@dtc1.itc.edu.kh', '0320', 'Phnom Penh, Cambodia'),
+('e20211081', 'CHAN Sophara', 'M', '2003-10-25', '0973513505', 'I5-AMS-A', 'e20211081@dtc1.itc.edu.kh', '1081', 'Phnom Penh, Cambodia'),
+('e20210931', 'HENG Sophanha', 'M', '2004-07-31', '061316313', 'I5-AMS-A', 'e20210931@dtc1.itc.edu.kh', '0931', 'Phnom Penh, Cambodia'),
+('e20210134', 'NGORN Panha', 'M', '2004-11-16', '061285653', 'I5-AMS-B', 'e20210134@dtc1.itc.edu.kh', '0134', 'Phnom Penh, Cambodia'),
+('e20211572', 'PEN Virak', 'M', '2004-02-23', '011806039', 'I5-AMS-B', 'e20211572@dtc1.itc.edu.kh', '1572', 'Phnom Penh, Cambodia');
+
+INSERT INTO teachers (full_name, email, password) VALUES
+('Mr. TOUCH Sopheak', 'touch.sopheak@dtc.edu.kh', 'teacher123'),
+('Madame BUN Veary', 'bun.veary@dtc.edu.kh', 'teacher123'),
+('Monsieur NHEP Kimhun', 'nhep.kimhun@dtc.edu.kh', 'teacher123'),
+('Dr. HAS Sothea', 'has.sothea@dtc.edu.kh', 'teacher123'),
+('Dr. SIM Tepmony', 'sim.tepmony@dtc.edu.kh', 'teacher123'),
+('Mr. KHEAN Vesal', 'khean.vesal@dtc.edu.kh', 'teacher123'),
+('Dr. KHON Vanny', 'khon.vanny@dtc.edu.kh', 'teacher123'),
+('Mrs. Meas Phalin', 'meas.phalin@dtc.edu.kh', 'teacher123'),
+('Mr. KEO Pichmony', 'keo.pichmony@dtc.edu.kh', 'teacher123');
+
+INSERT INTO courses (course_code, course_name, description) VALUES
+('PM', 'Project Management', 'Project Management Course'),
+('MIP', 'Module d''insertion Professionnelle', 'Professional Integration Module'),
+('EDA', 'Exploratory Data Analysis', 'Data Analysis Course'),
+('NLP', 'Natural Language Processing', 'NLP Course'),
+('TSA', 'Time Series Analysis', 'Time Series Analysis Course'),
+('APDS', 'Advanced Programming for Data Science', 'Advanced Programming Course'),
+('IWR', 'Information Writing and Reporting', 'Information Writing Course'),
+('EWC', 'English for Work and Career', 'English Course');
+
+-- Insert timetable for I5-AMS-A
+INSERT INTO timetable (day_of_week, start_time, end_time, course_id, teacher_id, room, class_group, type) VALUES
+('Monday', '09:00:00', '11:00:00', 
+    (SELECT course_id FROM courses WHERE course_code = 'PM'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. TOUCH Sopheak'),
+    'F404', 'I5-AMS-A', 'Course'),
+('Monday', '15:00:00', '17:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'MIP'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Madame BUN Veary'),
+    'A307', 'I5-AMS-A', 'Course'),
+('Tuesday', '07:00:00', '09:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'EDA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F202', 'I5-AMS-A', 'TP'),
+('Tuesday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'NLP'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. TOUCH Sopheak'),
+    'F202', 'I5-AMS-A', 'TP'),
+('Wednesday', '07:00:00', '09:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'TSA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. SIM Tepmony'),
+    'F404', 'I5-AMS-A', 'Course'),
+('Wednesday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'TSA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. SIM Tepmony'),
+    'F202', 'I5-AMS-A', 'TP'),
+('Thursday', '07:00:00', '09:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'APDS'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. KHEAN Vesal'),
+    'F202', 'I5-AMS-A', 'TP'),
+('Thursday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'IWR'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. KHEAN Vesal'),
+    'F404', 'I5-AMS-A', 'Course'),
+('Thursday', '13:00:00', '15:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'EDA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F404', 'I5-AMS-A', 'Course'),
+('Friday', '07:00:00', '09:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'NLP'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. KHON Vanny'),
+    'F404', 'I5-AMS-A', 'Course'),
+('Friday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'EWC'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mrs. Meas Phalin'),
+    'i508', 'I5-AMS-A', 'Course'),
+('Friday', '13:00:00', '15:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'IWR'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. KHEAN Vesal'),
+    'F202', 'I5-AMS-A', 'TP'),
+('Friday', '15:00:00', '17:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'APDS'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F404', 'I5-AMS-A', 'Course');
+
+-- Insert timetable for I5-AMS-B
+INSERT INTO timetable (day_of_week, start_time, end_time, course_id, teacher_id, room, class_group, type) VALUES
+('Monday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'PM'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. TOUCH Sopheak'),
+    'F404', 'I5-AMS-B', 'Course'),
+('Monday', '13:00:00', '15:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'NLP'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. TOUCH Sopheak'),
+    'F202', 'I5-AMS-B', 'TP'),
+('Monday', '15:00:00', '17:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'MIP'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Monsieur NHEP Kimhun'),
+    'A309', 'I5-AMS-B', 'Course'),
+('Tuesday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'EDA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F206', 'I5-AMS-B', 'TP'),
+('Wednesday', '07:00:00', '09:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'TSA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. SIM Tepmony'),
+    'F404', 'I5-AMS-B', 'Course'),
+('Thursday', '19:00:00', '21:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'APDS'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F206', 'I5-AMS-B', 'TP'),
+('Thursday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'IWR'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. KHEAN Vesal'),
+    'F404', 'I5-AMS-B', 'Course'),
+('Thursday', '13:00:00', '15:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'EDA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F404', 'I5-AMS-B', 'Course'),
+('Thursday', '15:00:00', '17:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'IWR'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. KHEAN Vesal'),
+    'F202', 'I5-AMS-B', 'TP'),
+('Friday', '07:00:00', '09:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'NLP'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. KHON Vanny'),
+    'F404', 'I5-AMS-B', 'Course'),
+('Friday', '09:00:00', '11:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'EWC'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. KEO Pichmony'),
+    'i509', 'I5-AMS-B', 'Course'),
+('Friday', '13:00:00', '15:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'TSA'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Mr. TOUCH Sopheak'),
+    'F206', 'I5-AMS-B', 'TP'),
+('Friday', '15:00:00', '17:00:00',
+    (SELECT course_id FROM courses WHERE course_code = 'APDS'),
+    (SELECT teacher_id FROM teachers WHERE full_name = 'Dr. HAS Sothea'),
+    'F404', 'I5-AMS-B', 'Course');
+
+-- Create indexes for better performance
+CREATE INDEX idx_students_class_group ON students(class_group);
+CREATE INDEX idx_timetable_class_group ON timetable(class_group);
+CREATE INDEX idx_timetable_day ON timetable(day_of_week);
+CREATE INDEX idx_attendance_student_date ON attendance(student_id, attendance_date);
+CREATE INDEX idx_qr_codes_active ON qr_codes(is_active, valid_until);
+
+-- View to get student attendance summary
+CREATE VIEW student_attendance_summary AS
+SELECT 
+    s.student_id,
+    s.full_name,
+    s.class_group,
+    COUNT(a.attendance_id) as total_classes,
+    SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) as attended_classes,
+    ROUND(SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(a.attendance_id), 0), 2) as attendance_percentage
+FROM students s
+LEFT JOIN attendance a ON s.student_id = a.student_id
+GROUP BY s.student_id, s.full_name, s.class_group;
+
+-- View to get today's classes
+CREATE VIEW todays_classes AS
+SELECT 
+    t.*,
+    c.course_code,
+    c.course_name,
+    tea.full_name as teacher_name
+FROM timetable t
+JOIN courses c ON t.course_id = c.course_id
+JOIN teachers tea ON t.teacher_id = tea.teacher_id
+WHERE t.day_of_week = INITCAP(to_char(CURRENT_DATE, 'Day'));
+
+
+
+-- Check if qr_codes table exists and has data
+SELECT * FROM qr_codes ORDER BY created_at DESC LIMIT 5;
+
+-- Check if attendance table structure matches
+SELECT column_name, data_type FROM information_schema.columns 
+WHERE table_name = 'attendance';
+
+-- Add qr_data column to attendance table
+ALTER TABLE attendance ADD COLUMN IF NOT EXISTS qr_data TEXT;
+
+-- Add is_active to qr_codes table
+ALTER TABLE qr_codes ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
+
+
+-- 1. Create qr_codes table if it doesn't exist
+CREATE TABLE IF NOT EXISTS qr_codes (
+    qr_id SERIAL PRIMARY KEY,
+    qr_data TEXT NOT NULL,
+    course_id INTEGER REFERENCES courses(course_id),
+    class_group VARCHAR(50) NOT NULL,
+    valid_from TIMESTAMP NOT NULL,
+    valid_until TIMESTAMP NOT NULL,
+    teacher_id INTEGER REFERENCES teachers(teacher_id),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Add qr_id reference to attendance table
+ALTER TABLE attendance ADD COLUMN IF NOT EXISTS qr_id INTEGER REFERENCES qr_codes(qr_id);
+
+-- 3. Or just add qr_data text column
+ALTER TABLE attendance ADD COLUMN IF NOT EXISTS qr_data TEXT;
+
+
+
+
+
+
+
